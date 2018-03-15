@@ -1,19 +1,23 @@
 package de.virtual7.reactivelab.controller;
 
 import de.virtual7.reactivelab.event.TrackingEvent;
+import de.virtual7.reactivelab.event.TrackingEventType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.Instant;
 
 /**
  * Created by mihai.dobrescu
  */
-@RestController
+@Controller
 @RequestMapping("/events")
 public class EventController {
 
@@ -22,14 +26,22 @@ public class EventController {
     @GetMapping(path = "")
     public Flux<TrackingEvent> getEvents() {
         logger.info("getEvents() called!");
-        return null;
+        Flux<TrackingEvent> flux = Flux.interval(Duration.ofSeconds(1)).map(i -> generateEventWithRandomId());
+        return flux;
+        //return null;
     }
 
-    @GetMapping(path = "/latest")
+    @GetMapping(path = "/latest", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<TrackingEvent> getEventsLatest() {
         logger.info("getEventsLatest() called!");
-
-        return null;
+        return Flux.range(1,100).map(
+                i -> {
+                    return new TrackingEvent(new Long(i),
+                            TrackingEventType.getRandomType(),
+                            BigDecimal.TEN,
+                            Instant.now());
+                }
+        );
     }
 
     @GetMapping(path = "/top")
@@ -40,8 +52,16 @@ public class EventController {
     }
 
     public Flux<TrackingEvent> generateEventFluxWithRandomId() {
+        return Flux.just(generateEventWithRandomId());
+    }
 
-        return null;
+    public TrackingEvent generateEventWithRandomId() {
+        TrackingEvent event = new TrackingEvent();
+        event.setEventID((long) (Math.random()*123));
+        event.setEventType(TrackingEventType.getRandomType());
+        event.setEventValue(new BigDecimal(Math.random()*1234));
+        //event.setEventInstant();
+        return event;
     }
 
 
@@ -50,4 +70,8 @@ public class EventController {
         return null;
     }
 
+    @GetMapping(path="/freemarker")
+    public String freemarker(){
+        return "freemarker";
+    }
 }
