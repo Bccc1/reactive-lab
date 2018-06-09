@@ -26,22 +26,18 @@ public class EventController {
     @GetMapping(path = "")
     public Flux<TrackingEvent> getEvents() {
         logger.info("getEvents() called!");
-        Flux<TrackingEvent> flux = Flux.interval(Duration.ofSeconds(1)).map(i -> generateEventWithRandomId());
+        Flux<TrackingEvent> flux = Flux
+                .interval(Duration.ofSeconds(1))
+                .map(i -> generateEventWithRandomId());
         return flux;
-        //return null;
     }
 
     @GetMapping(path = "/latest", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<TrackingEvent> getEventsLatest() {
         logger.info("getEventsLatest() called!");
-        return Flux.range(1,100).map(
-                i -> {
-                    return new TrackingEvent(new Long(i),
-                            TrackingEventType.getRandomType(),
-                            BigDecimal.TEN,
-                            Instant.now());
-                }
-        );
+        return Flux
+                .range(1,100)
+                .map( i -> generateEventWithId(Long.valueOf(i)) );
     }
 
     @GetMapping(path = "/top")
@@ -51,27 +47,37 @@ public class EventController {
         return null;
     }
 
-    public Flux<TrackingEvent> generateEventFluxWithRandomId() {
-        return Flux.just(generateEventWithRandomId());
-    }
 
-    public TrackingEvent generateEventWithRandomId() {
-        TrackingEvent event = new TrackingEvent();
-        event.setEventID((long) (Math.random()*123));
-        event.setEventType(TrackingEventType.getRandomType());
-        event.setEventValue(new BigDecimal(Math.random()*1234));
-        //event.setEventInstant();
-        return event;
-    }
 
 
     @GetMapping(path = "/{eventId}")
     public Mono<TrackingEvent> getEvent(@PathVariable String eventId) {
-        return null;
+        return Mono.just(generateEventWithId(Long.valueOf(eventId)));
     }
 
     @GetMapping(path="/freemarker")
     public String freemarker(){
         return "freemarker";
+    }
+
+
+    // *
+    // * Helper methods
+    // *
+
+
+    private Flux<TrackingEvent> generateEventFluxWithRandomId() {
+        return Flux.just(generateEventWithRandomId());
+    }
+
+    private TrackingEvent generateEventWithRandomId() {
+        return generateEventWithId((long) (Math.random()*123));
+    }
+
+    private TrackingEvent generateEventWithId(Long id){
+        return new TrackingEvent(new Long(id),
+                TrackingEventType.getRandomType(),
+                new BigDecimal(Math.random()*1234),
+                Instant.now());
     }
 }
